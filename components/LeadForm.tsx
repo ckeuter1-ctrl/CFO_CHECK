@@ -10,11 +10,10 @@ const LEAD_EMAIL_KEY = "excel_shadow_lead_email";
 const OTHER_ROLE = "Другое";
 
 const ROLE_OPTIONS = [
-  "CFO / финансовый директор",
-  "Финансовый контролер",
   "Собственник / CEO",
-  "Руководитель казначейства",
+  "CFO / финансовый директор",
   "Главный бухгалтер",
+  "Руководитель казначейства",
   "Руководитель проектного офиса",
   OTHER_ROLE,
 ];
@@ -183,6 +182,24 @@ export default function LeadForm() {
     setDiagnosisPending(false);
   }
 
+  function fillDebugForm() {
+    const timestamp = Date.now();
+    const form = document.querySelector<HTMLFormElement>("form");
+    if (!form || leadId) return;
+
+    const emailInput = form.elements.namedItem("email") as HTMLInputElement | null;
+    const nameInput = form.elements.namedItem("name") as HTMLInputElement | null;
+    const companyInput = form.elements.namedItem("company") as HTMLInputElement | null;
+
+    if (emailInput) emailInput.value = `test+${timestamp}@debug.local`;
+    if (nameInput) nameInput.value = "UTM Test";
+    if (companyInput) companyInput.value = "UTM Test Company";
+    setSelectedRole("CFO / финансовый директор");
+    setError("");
+    setLastCRMAction("form_prefilled");
+    setLastApiResponse({ ok: true });
+  }
+
   function resetDebugSession() {
     for (let index = localStorage.length - 1; index >= 0; index -= 1) {
       const key = localStorage.key(index);
@@ -290,13 +307,24 @@ export default function LeadForm() {
           <aside className="mt-4 overflow-auto rounded-2xl border border-amber-300 bg-amber-50 p-4 font-mono text-xs leading-5 text-amber-950">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <strong>Debug (?debug=1)</strong>
-              <button
-                type="button"
-                onClick={resetDebugSession}
-                className="rounded-lg border border-amber-500/50 bg-white/60 px-3 py-1.5 font-sans text-xs font-semibold transition hover:bg-white"
-              >
-                Сбросить тестовую сессию
-              </button>
+              <div className="flex flex-wrap gap-2">
+                {!leadId && (
+                  <button
+                    type="button"
+                    onClick={fillDebugForm}
+                    className="rounded-lg border border-amber-500/50 bg-white/60 px-3 py-1.5 font-sans text-xs font-semibold transition hover:bg-white"
+                  >
+                    Заполнить тестовыми данными
+                  </button>
+                )}
+                <button
+                  type="button"
+                  onClick={resetDebugSession}
+                  className="rounded-lg border border-amber-500/50 bg-white/60 px-3 py-1.5 font-sans text-xs font-semibold transition hover:bg-white"
+                >
+                  Сбросить тестовую сессию
+                </button>
+              </div>
             </div>
             <pre className="mt-2 whitespace-pre-wrap">{JSON.stringify({ leadId: leadId || null, leadCreated, lastCRMAction, utm, lastApiResponse }, null, 2)}</pre>
           </aside>
