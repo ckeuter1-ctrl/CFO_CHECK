@@ -1,0 +1,71 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  background:
+    linear-gradient(135deg, rgba(220, 232, 223, 0.38), transparent 40%),
+    #f5f2e9;
+  color: #17201d;
+  font-family: Arial, Helvetica, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+.font-serif {
+  font-family: Georgia, "Times New Roman", serif;
+}
+
+@layer components {
+  .form-label {
+    @apply block text-sm font-semibold text-ink/75;
+  }
+
+  .form-input {
+    @apply mt-2 w-full rounded-xl border border-forest/10 bg-white/65 px-4 py-3 text-base font-normal text-ink outline-none transition placeholder:text-ink/30 hover:border-forest/20 focus:border-forest/45 focus:bg-white focus:ring-2 focus:ring-forest/10;
+  }
+
+  .button-primary,
+  .button-secondary {
+    @apply inline-flex min-h-12 items-center justify-center rounded-xl border border-transparent px-5 py-3 text-center text-sm font-semibold transition focus:outline-none focus:ring-2 focus:ring-copper focus:ring-offset-2;
+  }
+
+  .button-secondary {
+    @apply border-current;
+  }
+}
+
+@media print {
+  body {
+    background: white;
+  }
+
+  header,
+  main > section:first-of-type > :not(.col-span-full),
+  .print-hidden {
+    display: none !important;
+  }
+
+  .checklist-print {
+    max-width: none;
+    padding: 0;
+  }
+
+  .checklist-print > div {
+    border: 0;
+    box-shadow: none;
+    padding: 0;
+  }
+}
