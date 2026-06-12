@@ -67,12 +67,15 @@ export async function POST(request: Request) {
         if (phone.length > 40) {
           return NextResponse.json({ ok: false, error: "Телефон указан в некорректном формате." }, { status: 400 });
         }
-        await updateLead(
+        await updateLead(leadId, {
+          TITLE: "MQL: запрос диагностики — 10 признаков теневой Excel-системы",
+        });
+        await addTimelineComment(
           leadId,
-          { TITLE: "MQL: запрос диагностики — 10 признаков теневой Excel-системы" },
-          phone || undefined,
+          phone
+            ? `Пользователь запросил диагностику контура факта. Телефон для связи: ${phone}`
+            : "Пользователь запросил диагностику контура факта.",
         );
-        await addTimelineComment(leadId, "Пользователь запросил диагностику контура факта.");
         break;
       }
     }
