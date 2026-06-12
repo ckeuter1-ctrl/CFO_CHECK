@@ -7,6 +7,17 @@ import { DIRECT_UTM, readUtm, type UtmData } from "@/lib/utm";
 
 const LEAD_ID_KEY = "excel_shadow_lead_id";
 const LEAD_EMAIL_KEY = "excel_shadow_lead_email";
+const OTHER_ROLE = "Другое";
+
+const ROLE_OPTIONS = [
+  "CFO / финансовый директор",
+  "Финансовый контролер",
+  "Собственник / CEO",
+  "Руководитель казначейства",
+  "Главный бухгалтер",
+  "Руководитель проектного офиса",
+  OTHER_ROLE,
+];
 
 type ApiResult = {
   ok: boolean;
@@ -22,15 +33,19 @@ export default function LeadForm() {
   const [utm, setUtm] = useState<UtmData>(DIRECT_UTM);
   const [debug, setDebug] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [selectedRole, setSelectedRole] = useState("");
   const [error, setError] = useState("");
   const [focus, setFocus] = useState("");
   const [focusPending, setFocusPending] = useState(false);
+  const [focusMessage, setFocusMessage] = useState("");
   const [diagnosisRequested, setDiagnosisRequested] = useState(false);
   const [diagnosisPending, setDiagnosisPending] = useState(false);
   const [lastCRMAction, setLastCRMAction] = useState("—");
   const [lastApiResponse, setLastApiResponse] = useState<ApiResult | null>(null);
   const submittingRef = useRef(false);
   const checklistActionPending = useRef(false);
+  const focusRequestsPending = useRef(0);
+  const selectedFocusRef = useRef("");
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -40,6 +55,7 @@ export default function LeadForm() {
     setDebug(params.get("debug") === "1");
     setLeadId(storedLeadId);
     setFocus(storedFocus);
+    selectedFocusRef.current = storedFocus;
     setDiagnosisRequested(
       storedLeadId ? localStorage.getItem(`excel_shadow_diagnosis_${storedLeadId}`) === "true" : false,
     );
@@ -65,6 +81,9 @@ export default function LeadForm() {
     const form = event.currentTarget;
     const formData = new FormData(form);
     const email = String(formData.get("email") || "").trim();
+    const role = String(formData.get("role") || "").trim();
+    const customRole = String(formData.get("customRole") || "").trim();
+    const finalRole = role === OTHER_ROLE ? customRole || OTHER_ROLE : role;
 
     submittingRef.current = true;
     setSubmitting(true);
@@ -78,7 +97,7 @@ export default function LeadForm() {
           email,
           name: String(formData.get("name") || "").trim(),
           company: String(formData.get("company") || "").trim(),
-          role: String(formData.get("role") || "").trim(),
+          role: finalRole,
           ...utm,
         }),
       });
@@ -133,27 +152,59 @@ export default function LeadForm() {
   }
 
   async function updateFocus(nextFocus: string) {
-    if (focusPending || nextFocus === focus) return;
+    if (nextFocus === selectedFocusRef.current) return;
+
+    selectedFocusRef.current = nextFocus;
+    setFocus(nextFocus);
+    setFocusMessage("");
+    localStorage.setItem(`excel_shadow_focus_${leadId}`, nextFocus);
+    focusRequestsPending.current += 1;
     setFocusPending(true);
+
     const result = await postAction({ action: "focus_updated", focus: nextFocus });
     recordResult("focus_updated", result);
-    if (result.ok) {
-      setFocus(nextFocus);
-      localStorage.setItem(`excel_shadow_focus_${leadId}`, nextFocus);
+    focusRequestsPending.current -= 1;
+    setFocusPending(focusRequestsPending.current > 0);
+
+    if (!result.ok) {
+      setFocusMessage("Выбор сохранён на странице, но CRM сейчас не ответила. Можно продолжить работу с чек-листом.");
     }
-    setFocusPending(false);
   }
 
-  async function requestDiagnosis() {
+  async function requestDiagnosis(phone: string) {
     if (diagnosisRequested || diagnosisPending) return;
     setDiagnosisPending(true);
-    const result = await postAction({ action: "diagnosis_requested" });
+    const result = await postAction({ action: "diagnosis_requested", phone: phone.trim() || undefined });
     recordResult("diagnosis_requested", result);
     if (result.ok) {
       setDiagnosisRequested(true);
       localStorage.setItem(`excel_shadow_diagnosis_${leadId}`, "true");
     }
     setDiagnosisPending(false);
+  }
+
+  function resetDebugSession() {
+    for (let index = localStorage.length - 1; index >= 0; index -= 1) {
+      const key = localStorage.key(index);
+      if (key?.startsWith("excel_shadow_")) localStorage.removeItem(key);
+    }
+
+    submittingRef.current = false;
+    checklistActionPending.current = false;
+    focusRequestsPending.current = 0;
+    selectedFocusRef.current = "";
+    setLeadId("");
+    setLeadCreated(false);
+    setSelectedRole("");
+    setError("");
+    setFocus("");
+    setFocusPending(false);
+    setFocusMessage("");
+    setDiagnosisRequested(false);
+    setDiagnosisPending(false);
+    setLastCRMAction("session_reset");
+    setLastApiResponse({ ok: true });
+    window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
   if (!hydrated) {
@@ -167,6 +218,7 @@ export default function LeadForm() {
           <ThankYouScreen
             focus={focus}
             focusPending={focusPending}
+            focusMessage={focusMessage}
             diagnosisRequested={diagnosisRequested}
             diagnosisPending={diagnosisPending}
             onOpenChecklist={openChecklist}
@@ -196,8 +248,31 @@ export default function LeadForm() {
               </label>
               <label className="form-label">
                 Роль / должность
-                <input className="form-input" type="text" name="role" autoComplete="organization-title" maxLength={180} placeholder="CFO, финансовый контролер" />
+                <select
+                  className="form-input appearance-none"
+                  name="role"
+                  value={selectedRole}
+                  onChange={(event) => setSelectedRole(event.target.value)}
+                >
+                  <option value="">Выберите роль</option>
+                  {ROLE_OPTIONS.map((role) => (
+                    <option key={role} value={role}>{role}</option>
+                  ))}
+                </select>
               </label>
+              {selectedRole === OTHER_ROLE && (
+                <label className="form-label">
+                  Уточните роль
+                  <input
+                    className="form-input"
+                    type="text"
+                    name="customRole"
+                    autoComplete="organization-title"
+                    maxLength={180}
+                    placeholder="Например, руководитель FP&A"
+                  />
+                </label>
+              )}
             </div>
 
             {error && <p className="mt-4 rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700" role="alert">{error}</p>}
@@ -213,7 +288,16 @@ export default function LeadForm() {
 
         {debug && (
           <aside className="mt-4 overflow-auto rounded-2xl border border-amber-300 bg-amber-50 p-4 font-mono text-xs leading-5 text-amber-950">
-            <strong>Debug (?debug=1)</strong>
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <strong>Debug (?debug=1)</strong>
+              <button
+                type="button"
+                onClick={resetDebugSession}
+                className="rounded-lg border border-amber-500/50 bg-white/60 px-3 py-1.5 font-sans text-xs font-semibold transition hover:bg-white"
+              >
+                Сбросить тестовую сессию
+              </button>
+            </div>
             <pre className="mt-2 whitespace-pre-wrap">{JSON.stringify({ leadId: leadId || null, leadCreated, lastCRMAction, utm, lastApiResponse }, null, 2)}</pre>
           </aside>
         )}
