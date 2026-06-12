@@ -34,7 +34,7 @@ body {
   }
 
   .form-input {
-    @apply mt-2 w-full rounded-xl border border-forest/15 bg-cream/60 px-4 py-3.5 text-base font-normal text-ink outline-none transition placeholder:text-ink/30 focus:border-forest focus:bg-white focus:ring-2 focus:ring-forest/10;
+    @apply mt-2 w-full rounded-xl border border-forest/10 bg-white/65 px-4 py-3 text-base font-normal text-ink outline-none transition placeholder:text-ink/30 hover:border-forest/20 focus:border-forest/45 focus:bg-white focus:ring-2 focus:ring-forest/10;
   }
 
   .button-primary,
