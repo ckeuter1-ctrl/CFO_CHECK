@@ -62,12 +62,19 @@ export async function POST(request: Request) {
         break;
       }
 
-      case "diagnosis_requested":
-        await updateLead(leadId, {
-          TITLE: "MQL: запрос диагностики — 10 признаков теневой Excel-системы",
-        });
+      case "diagnosis_requested": {
+        const phone = typeof body.phone === "string" ? body.phone.trim() : "";
+        if (phone.length > 40) {
+          return NextResponse.json({ ok: false, error: "Телефон указан в некорректном формате." }, { status: 400 });
+        }
+        await updateLead(
+          leadId,
+          { TITLE: "MQL: запрос диагностики — 10 признаков теневой Excel-системы" },
+          phone || undefined,
+        );
         await addTimelineComment(leadId, "Пользователь запросил диагностику контура факта.");
         break;
+      }
     }
 
     return NextResponse.json({ ok: true, action: body.action });
