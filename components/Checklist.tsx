@@ -84,19 +84,14 @@ export default function Checklist({ leadId, onActionResult }: ChecklistProps) {
   return (
     <section id="checklist" className="checklist-print mx-auto w-full max-w-5xl px-5 pb-24 pt-8 sm:px-8 lg:px-12">
       <div className="rounded-[2rem] border border-forest/10 bg-white p-6 shadow-soft sm:p-10 lg:p-14">
-        <div className="flex flex-col justify-between gap-6 border-b border-forest/10 pb-8 sm:flex-row sm:items-end">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-copper">Self-check</p>
-            <h2 className="mt-3 max-w-2xl font-serif text-4xl leading-tight text-ink sm:text-5xl">
-              10 признаков теневой Excel-системы
-            </h2>
-            <p className="mt-4 max-w-2xl leading-7 text-ink/60">
-              Как быстро понять, где у вас на самом деле живёт управленческий факт: в системе, в таблице или в голове ключевого сотрудника.
-            </p>
-          </div>
-          <button type="button" onClick={() => window.print()} className="print-hidden text-sm font-semibold text-forest underline underline-offset-4">
-            Сохранить в PDF
-          </button>
+        <div className="border-b border-forest/10 pb-8">
+          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-copper">Self-check</p>
+          <h2 className="mt-3 max-w-2xl font-serif text-4xl leading-tight text-ink sm:text-5xl">
+            10 признаков теневой Excel-системы
+          </h2>
+          <p className="mt-4 max-w-2xl leading-7 text-ink/60">
+            Как быстро понять, где у вас на самом деле живёт управленческий факт: в системе, в таблице или в голове ключевого сотрудника.
+          </p>
         </div>
 
         <div className="mt-8 space-y-3">
@@ -138,6 +133,10 @@ export default function Checklist({ leadId, onActionResult }: ChecklistProps) {
           <p><strong className="text-forest">6–8:</strong> Excel стал теневой системой управления.</p>
           <p><strong className="text-forest">9–10:</strong> высокий риск управляемости.</p>
         </div>
+
+        <button type="button" onClick={() => window.print()} className="print-hidden button-primary mt-8 w-full bg-forest text-white hover:bg-ink sm:w-auto">
+          Сохранить в PDF
+        </button>
       </div>
     </section>
   );
