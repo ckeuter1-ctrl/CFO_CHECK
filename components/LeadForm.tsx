@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { FormEvent, useCallback, useEffect, useRef, useState } from "react";
 import Checklist from "@/components/Checklist";
 import ThankYouScreen from "@/components/ThankYouScreen";
@@ -41,6 +42,7 @@ export default function LeadForm() {
   const [diagnosisPending, setDiagnosisPending] = useState(false);
   const [lastCRMAction, setLastCRMAction] = useState("—");
   const [lastApiResponse, setLastApiResponse] = useState<ApiResult | null>(null);
+  const formRef = useRef<HTMLFormElement>(null);
   const submittingRef = useRef(false);
   const checklistActionPending = useRef(false);
   const focusRequestsPending = useRef(0);
@@ -182,22 +184,22 @@ export default function LeadForm() {
     setDiagnosisPending(false);
   }
 
-  function fillDebugForm() {
-    const timestamp = Date.now();
-    const form = document.querySelector<HTMLFormElement>("form");
+  function fillDebugTestData() {
+    const form = formRef.current;
     if (!form || leadId) return;
 
-    const emailInput = form.elements.namedItem("email") as HTMLInputElement | null;
-    const nameInput = form.elements.namedItem("name") as HTMLInputElement | null;
-    const companyInput = form.elements.namedItem("company") as HTMLInputElement | null;
+    const emailInput = form.elements.namedItem("email");
+    const nameInput = form.elements.namedItem("name");
+    const companyInput = form.elements.namedItem("company");
 
-    if (emailInput) emailInput.value = `test+${timestamp}@debug.local`;
-    if (nameInput) nameInput.value = "UTM Test";
-    if (companyInput) companyInput.value = "UTM Test Company";
+    if (emailInput instanceof HTMLInputElement) {
+      emailInput.value = `test+${Date.now()}@debug.local`;
+    }
+    if (nameInput instanceof HTMLInputElement) nameInput.value = "UTM Test";
+    if (companyInput instanceof HTMLInputElement) companyInput.value = "UTM Test Company";
+
     setSelectedRole("CFO / финансовый директор");
     setError("");
-    setLastCRMAction("form_prefilled");
-    setLastApiResponse({ ok: true });
   }
 
   function resetDebugSession() {
@@ -243,7 +245,7 @@ export default function LeadForm() {
             onDiagnosisRequest={requestDiagnosis}
           />
         ) : (
-          <form onSubmit={submitLead} className="rounded-[2rem] border border-white/80 bg-white/90 p-6 shadow-soft backdrop-blur sm:p-9">
+          <form ref={formRef} onSubmit={submitLead} className="rounded-[2rem] border border-white/80 bg-white/90 p-6 shadow-soft backdrop-blur sm:p-9">
             <div className="mb-7">
               <p className="text-xs font-semibold uppercase tracking-[0.15em] text-copper">Доступ сразу</p>
               <h2 className="mt-2 font-serif text-3xl text-ink">Получить чек-лист</h2>
@@ -292,6 +294,21 @@ export default function LeadForm() {
               )}
             </div>
 
+            <label className="mt-5 flex cursor-pointer items-start gap-3 text-sm leading-5 text-ink/65">
+              <input
+                type="checkbox"
+                name="privacyConsent"
+                required
+                className="mt-0.5 h-4 w-4 shrink-0 accent-[#143b31]"
+              />
+              <span>
+                Я согласен на обработку персональных данных и ознакомился с{" "}
+                <Link href="/privacy" className="font-medium text-forest underline decoration-forest/30 underline-offset-2 hover:decoration-forest">
+                  политикой конфиденциальности
+                </Link>.
+              </span>
+            </label>
+
             {error && <p className="mt-4 rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700" role="alert">{error}</p>}
 
             <button type="submit" disabled={submitting} className="button-primary mt-6 w-full bg-forest text-white hover:bg-ink disabled:cursor-wait disabled:opacity-70">
@@ -299,6 +316,12 @@ export default function LeadForm() {
             </button>
             <p className="mt-4 text-center text-xs leading-5 text-ink/45">
               Материал откроется сразу после отправки. Без спама и навязчивых звонков.
+            </p>
+            <p className="mt-2 text-center text-xs leading-5 text-ink/45">
+              Отправляя форму, вы соглашаетесь с{" "}
+              <Link href="/privacy" className="text-forest underline decoration-forest/25 underline-offset-2 hover:decoration-forest">
+                политикой конфиденциальности
+              </Link>.
             </p>
           </form>
         )}
@@ -311,7 +334,7 @@ export default function LeadForm() {
                 {!leadId && (
                   <button
                     type="button"
-                    onClick={fillDebugForm}
+                    onClick={fillDebugTestData}
                     className="rounded-lg border border-amber-500/50 bg-white/60 px-3 py-1.5 font-sans text-xs font-semibold transition hover:bg-white"
                   >
                     Заполнить тестовыми данными

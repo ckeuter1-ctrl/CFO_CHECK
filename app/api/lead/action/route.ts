@@ -64,7 +64,8 @@ export async function POST(request: Request) {
 
       case "diagnosis_requested": {
         const phone = typeof body.phone === "string" ? body.phone.trim() : "";
-        if (phone.length > 40) {
+        const phoneDigits = phone.replace(/[\s()+-]/g, "");
+        if (phone && (!/^\d+$/.test(phoneDigits) || (phoneDigits.length !== 10 && phoneDigits.length !== 11))) {
           return NextResponse.json({ ok: false, error: "Телефон указан в некорректном формате." }, { status: 400 });
         }
         await updateLead(leadId, {
